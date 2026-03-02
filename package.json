@@ -1,0 +1,19 @@
+{
+  "name": "vechain-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VeChain AI monorepo — plugins, agents, and tools for AI-assisted VeChain development",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "packages/plugins/*"
+  ],
+  "scripts": {
+    "lint-markdown": "markdownlint-cli2 '**/*.md' '#node_modules' '#.git'",
+    "validate": "npx nx run vechain-dev:validate"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "^0.17.2",
+    "nx": "^20.4.4"
+  }
+}
