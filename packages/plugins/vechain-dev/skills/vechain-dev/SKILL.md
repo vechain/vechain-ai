@@ -33,20 +33,29 @@ Use this Skill for any VeChain development task:
 | EVM target | `paris` (mandatory) | -- |
 | Testing | Hardhat + Thor Solo (`--on-demand`) | -- |
 | Types | TypeChain (`@typechain/ethers-v6`) | `@vechain/vechain-contract-types` (pre-built) |
+| Node | Node 20 LTS (managed via `nvm`) | -- |
 
 ## Operating procedure
 
-### 1. Detect project structure
+### 1. Check Node version
+
+Before installing dependencies or running any command:
+
+- Check if `.nvmrc` exists in the project root. If yes, run `nvm use` to switch to the required version.
+- If `.nvmrc` does not exist, create one with `20` (Node 20 LTS) and run `nvm use`.
+- When adding dependencies that require a specific Node version, update `.nvmrc` accordingly.
+
+### 2. Detect project structure
 
 - `turbo.json` present → follow Turborepo conventions (`apps/frontend`, `packages/contracts`, `packages/*`)
 - Use `useThor` for Thor client access (both VeChain Kit and dapp-kit v2). `useConnex` is deprecated everywhere.
 - Apply conditional patterns (Chakra UI, i18n, Zustand) only when the project uses them
 
-### 2. Classify the task layer
+### 3. Classify the task layer
 
 UI/hooks → SDK/scripts → Smart contracts → Testing/CI → Infra
 
-### 3. Pick building blocks
+### 4. Pick building blocks
 
 - UI (full-featured): VeChain Kit hooks + components
 - UI (lightweight/non-React): dapp-kit
@@ -60,7 +69,7 @@ UI/hooks → SDK/scripts → Smart contracts → Testing/CI → Infra
 - Do you want a lightweight wallet-only integration with minimal dependencies? → dapp-kit
 - Non-React framework? → dapp-kit
 
-### 4. Implement with VeChain-specific correctness
+### 5. Implement with VeChain-specific correctness
 
 - Network: always explicit (`mainnet`/`testnet`/`solo`)
 - Gas: estimate first, use fee delegation where appropriate
@@ -68,13 +77,13 @@ UI/hooks → SDK/scripts → Smart contracts → Testing/CI → Infra
 - Tokens: VET for value, VTHO for gas (dual-token model)
 - Social login: Generic Delegator auto-enabled (users pay gas in VET/VTHO/B3TR); app-sponsored delegation optional for better UX; smart accounts; pre-fetch data before `sendTransaction`
 
-### 5. Test
+### 6. Test
 
 - Unit: Hardhat + Thor Solo
 - Integration: Thor Solo with realistic state
 - Wallet UX: mocked hook/provider tests
 
-### 6. Deliver
+### 7. Deliver
 
 - Files changed + diffs
 - Install/build/test commands
