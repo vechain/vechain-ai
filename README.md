@@ -31,12 +31,12 @@ A single comprehensive skill covering the full VeChain development stack:
 ## Example Prompts
 
 ```text
-"I want wallet management in my app"
-"Help me build a VeBetter app"
-"Add a button to send rewards to the users"
-"Add social login to my app"
-"Help me set up a Next.js app with VeChain Kit and social login"
-"Review this contract for security issues"
+"Set up a Next.js app with VeChain Kit and social login"
+"Deploy an ERC-20 token on VeChainThor with Hardhat"
+"Add fee delegation so my users don't pay gas"
+"Send VET and call a contract in one multi-clause transaction"
+"Help me build a VeBetterDAO X2Earn app"
+"Review my smart contract for security vulnerabilities"
 ```
 
 ## Contributing
