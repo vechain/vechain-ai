@@ -14,6 +14,11 @@ See [frontend.md](frontend.md) for choosing VeChain Kit vs dapp-kit, React Query
 
 **Important:** VeChain Kit requires `--legacy-peer-deps` due to peer dependency conflicts.
 
+**Before installing**, check the existing project:
+
+- **React Query (`@tanstack/react-query`)**: VeChain Kit hooks depend on it. If the project doesn't have it yet, ask the developer if they want to add it (they almost certainly do — it's required for `useCallClause` and all data-fetching hooks). If the project uses a different data-fetching library (SWR, etc.), flag the potential conflict.
+- **CSS framework**: See [CSS Framework Choice](#css-framework-choice) below — ask whether to keep Tailwind or switch to Chakra UI.
+
 ```bash
 yarn add --legacy-peer-deps @vechain/vechain-kit
 
@@ -33,9 +38,40 @@ For npm, use `npm install --legacy-peer-deps` instead.
 
 **Why `@vechain/vechain-contract-types`?** It provides TypeChain-generated ABIs and factories for all major VeChain ecosystem contracts (B3TR, VOT3, StarGate, VET domains, smart accounts, etc.). Use these with `useCallClause` instead of hand-writing ABIs. See [abi-codegen.md](abi-codegen.md) for the full list.
 
+**If the project doesn't have React Query yet**, also set up the `QueryClientProvider`:
+
+```tsx
+// app/providers.tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* VeChainKitProvider goes here */}
+      {children}
+    </QueryClientProvider>
+  );
+}
+```
+
+### CSS Framework Choice
+
+VeChain Kit uses **Chakra UI v2** internally for all its modal and UI components. When setting up a new project, **ask the developer** which approach they prefer:
+
+| Option | Pros | Cons |
+|--------|------|------|
+| **Use Chakra UI for the whole app** (recommended) | Full visual consistency with VeChain Kit modals, no CSS conflicts, access to Chakra's component library | Must learn Chakra if unfamiliar |
+| **Keep Tailwind CSS** | Developer stays in familiar framework | Requires preflight fix (see below), possible style inconsistencies between app UI and VeChain Kit modals |
+
+**If the developer chooses Chakra UI:** no extra CSS configuration needed — Chakra's `ChakraProvider` and VeChain Kit share the same styling engine. Use Chakra components (`Box`, `Button`, `Text`, `Flex`, etc.) throughout the app.
+
+**If the developer keeps Tailwind CSS (especially v4):** apply the preflight fix below.
+
 ### Tailwind CSS v4 Compatibility
 
-VeChain Kit uses Chakra UI v2 internally for its modal and UI components. **Tailwind CSS v4's preflight (CSS reset) conflicts with Chakra UI's styles**, stripping default sizing from elements that Chakra expects to be intact (buttons collapse, inputs lose height, spacing breaks inside the VeChain Kit modal).
+Tailwind CSS v4's preflight (CSS reset) **conflicts with Chakra UI's styles** inside VeChain Kit modals — buttons collapse, inputs lose height, spacing breaks.
 
 **Fix: disable Tailwind's preflight.** Replace the default Tailwind import with individual imports that skip `preflight.css`:
 
@@ -51,8 +87,6 @@ VeChain Kit uses Chakra UI v2 internally for its modal and UI components. **Tail
 ```
 
 This removes Tailwind's CSS reset while keeping all utilities and theme variables. Chakra UI applies its own reset inside VeChain Kit components, so they render correctly.
-
-If you still want Tailwind's reset for your own components, scope it to your app container instead of applying it globally.
 
 ### Provider Setup (Next.js App Router)
 
