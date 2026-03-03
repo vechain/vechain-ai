@@ -212,6 +212,49 @@ This complements the `@vechain/mcp-server` (which provides blockchain data + mul
 - [VeChain Explorer (Testnet)](https://explore-testnet.vechain.org/)
 
 ## Network Endpoints
+
 - **Mainnet**: `https://mainnet.vechain.org`
 - **Testnet**: `https://testnet.vechain.org`
 - **Thor Solo (local)**: `http://localhost:8669`
+
+## Thor REST API (direct HTTP, no SDK needed)
+
+For lightweight reads without the SDK (e.g., serverless functions, scripts):
+
+```bash
+# VET balance
+GET /accounts/{address}
+# → { "balance": "0x...", "energy": "0x...", "hasCode": false }
+
+# Token balance (balanceOf via simulated call)
+POST /accounts/*
+{
+  "clauses": [{ "to": "0xTokenAddress", "value": "0", "data": "0x70a08231000000000000000000000000{address}" }]
+}
+# → { "results": [{ "data": "0x...", "gasUsed": ... }] }
+```
+
+**Common mistake:** Do NOT `POST /accounts/{tokenAddress}` — token reads use `POST /accounts/*` with clauses.
+
+## Token Registry
+
+Public JSON registry of VeChain tokens with metadata and icons:
+
+- **Mainnet**: `https://vechain.github.io/token-registry/main.json`
+- **Testnet**: `https://vechain.github.io/token-registry/test.json`
+- **Icon URL**: `https://vechain.github.io/token-registry/assets/{icon}` (where `icon` is the hash filename from the JSON)
+
+## VET Domain Resolution
+
+For `.vet` domain lookups outside of React (in React, use VeChain Kit's `useVechainDomain` hook instead):
+
+- **Public API**: `https://vet.domains/api/lookup/name/{domain}` → `{ "addresses": [{ "address": "0x..." }] }`
+
+## App-Hub Submission
+
+To list your dApp in the VeChain ecosystem directory:
+
+1. Fork [vechain/app-hub](https://github.com/vechain/app-hub)
+2. Create `apps/{reversed-domain}/` (e.g., `apps/org.myapp/`)
+3. Add `manifest.json` + `logo.png` (512x512)
+4. PR to the `master` branch

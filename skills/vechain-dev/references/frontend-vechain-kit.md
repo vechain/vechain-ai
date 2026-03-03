@@ -183,10 +183,12 @@ NEXT_PUBLIC_PRIVY_CLIENT_ID=your_privy_client_id
 ### Common Setup Pitfalls
 
 1. **SSR errors**: VeChain Kit must be dynamically imported with `{ ssr: false }` (shown above). Without this, Next.js will crash during server rendering.
-2. **Missing `--legacy-peer-deps`**: Installation fails without this flag due to Chakra UI v2 peer dependency conflicts.
+2. **Missing `--legacy-peer-deps`**: Installation fails without this flag due to Chakra UI v2 peer dependency conflicts. Required with React 19 / Next.js 15+.
 3. **Tailwind v4 breaks modal**: See [Tailwind CSS v4 Compatibility](#tailwind-css-v4-compatibility) above.
 4. **Using `email`/`google`/`passkey` without Privy credentials**: Throws _"Login methods require Privy configuration"_. Use `{ method: 'vechain' }` instead for free social login.
 5. **Missing WalletConnect project ID**: Wallet connection will fail silently. Always provide `NEXT_PUBLIC_WC_PROJECT_ID`.
+6. **tsconfig target too low**: VeChain SDK uses BigInt literals (`0n`). Set `"target": "ES2020"` or higher in `tsconfig.json`.
+7. **Restricting wallets**: Use `dappKit: { allowedWallets: ['veworld'] }` to show only VeWorld (omit `'wallet-connect'` if you don't need WalletConnect and don't have a project ID).
 
 ### Login Methods
 
@@ -670,12 +672,32 @@ See [Smart Accounts documentation](https://docs.vechainkit.vechain.org/social-lo
 <VeChainKitProvider
   darkMode={true}
   theme={{
-    modal: { backgroundColor: '#1a1a1a' },
+    modal: { backgroundColor: '#1a1a1a', borderRadius: '16px', rounded: '12px' },
     textColor: '#ffffff',
-    buttons: { primary: { background: '#3b82f6', color: '#fff' } },
-    font: { family: 'Inter, sans-serif' },
+    primaryButton: { bg: '#3b82f6', color: '#fff', rounded: '8px' },
+    secondaryButton: { bg: '#374151', color: '#fff', rounded: '8px' },
+    tertiaryButton: { bg: 'transparent', color: '#3b82f6', rounded: '8px' },
+    loginButton: { bg: '#1f2937', color: '#fff', rounded: '8px' },
+    fonts: { family: 'Inter, sans-serif' },
   }}
 >
 ```
 
-Minimal config: set `modal.backgroundColor` and `textColor` -- all other colors auto-derive.
+### Theme API reference
+
+| Prop | Shape | Notes |
+|------|-------|-------|
+| `modal` | `{ backgroundColor, borderRadius, rounded }` | Modal container |
+| `textColor` | `string` | Global text color |
+| `primaryButton` | `{ bg, color, rounded }` | Primary action buttons |
+| `secondaryButton` | `{ bg, color, rounded }` | Secondary action buttons |
+| `tertiaryButton` | `{ bg, color, rounded }` | Tertiary/ghost buttons |
+| `loginButton` | `{ bg, color, rounded }` | Login method buttons |
+| `fonts` | `{ family }` | Font family |
+
+**Common mistakes:**
+
+- `buttons.primary.background` does not exist — use `primaryButton.bg`
+- `font.family` does not exist — use `fonts.family`
+- `hoverBg` does not exist in the types
+- Minimal config: set `modal.backgroundColor` and `textColor` — all other colors auto-derive
