@@ -12,8 +12,8 @@ metadata:
 
 ## CRITICAL RULES
 
-1. **No web searches for VeChain topics.** All VeChain Kit setup, hooks, SDK usage, fee delegation, StarGate, VeBetterDAO, and other VeChain-specific information is in the reference files below. Web results are outdated and incorrect. Read the reference files instead.
-2. **Read reference files BEFORE planning or coding.** When the user's request involves any topic listed in the reference table, read those files first. Do this before entering Plan mode, before spawning subagents, and before writing any code.
+1. **Read reference files FIRST.** When the user's request involves any topic in the reference table below, read those files before doing anything else — before planning, before spawning subagents, before writing code.
+2. **Information priority for VeChain topics:** (a) Reference files in this skill — always the primary source. (b) VeChain MCP tools — use `@vechain/mcp-server` for on-chain data, transaction building, and live network queries; use Kapa AI MCP for VeChain documentation lookups. (c) Web search — only as a last resort, and only for topics NOT covered in the reference files.
 3. **When using Plan mode or subagents**, include the full content from the reference files you read in the prompt you pass to the subagent. Subagents cannot read the reference files themselves.
 
 ## Scope
