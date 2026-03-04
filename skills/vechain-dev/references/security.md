@@ -388,7 +388,38 @@ function executeWithSignature(
 
 ---
 
+## Security Review Procedure
+
+When conducting a security review, follow this three-pass approach to avoid confirmation bias:
+
+### Pass 1 — Enumerate (be thorough)
+
+Walk through every contract function and external interaction. For each, check every category in the vulnerability list and checklists above. Report **all** potential findings, even low-confidence ones. Do not self-censor — over-reporting is better than missing a real issue.
+
+### Pass 2 — Challenge (be adversarial)
+
+Re-examine each finding from Pass 1 critically:
+
+- Is this actually exploitable, or only theoretically possible?
+- Does the surrounding code (guards, modifiers, call context) already prevent it?
+- Am I reporting this because there is evidence, or because the user asked me to find bugs?
+
+Discard findings that cannot survive this scrutiny. Reclassify severity where needed.
+
+### Pass 3 — Classify and report
+
+Present surviving findings grouped by severity (Critical / High / Medium / Low / Informational) with:
+
+- **What**: the vulnerability
+- **Where**: contract, function, line
+- **Why**: how an attacker exploits it
+- **Fix**: concrete remediation
+
+---
+
 ## Security Review Questions
+
+Use these as prompts during Pass 1:
 
 1. Can an attacker re-enter any function via an external call?
 2. Can an attacker call privileged functions without authorization?

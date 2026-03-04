@@ -15,6 +15,7 @@ metadata:
 1. **Read reference files FIRST.** When the user's request involves any topic in the reference table below, read those files before doing anything else — before writing code, before making decisions. Briefly mention which files you are reading so the user can confirm the skill is active (e.g., "Reading VeChain Kit reference...").
 2. **Information priority for VeChain topics:** (a) Reference files in this skill — always the primary source. (b) VeChain MCP tools — use `@vechain/mcp-server` for on-chain data, transaction building, and live network queries; use Kapa AI MCP for VeChain documentation lookups. (c) Web search — only as a last resort, and only for topics NOT covered in the reference files.
 3. **Prefer working directly in the main conversation** for VeChain tasks. Plan mode and subagents do not inherit skill context and may fall back to web search instead of using reference files.
+4. **After compaction or context loss**, re-read this SKILL.md to restore awareness of the reference table and operating procedure before continuing work.
 
 ## Scope
 
@@ -56,11 +57,19 @@ Before installing dependencies or running any command:
 - Use `useThor` for Thor client access (both VeChain Kit and dapp-kit v2). `useConnex` is deprecated everywhere.
 - Apply conditional patterns (Chakra UI, i18n, Zustand) only when the project uses them
 
-### 3. Classify the task layer
+### 3. Clarify before implementing
+
+When the user's request is ambiguous or could be solved multiple ways, **ask before building**. Do not silently research alternatives and pick one. Separate research from implementation:
+
+- If the scope is unclear, ask the user to narrow it
+- If multiple architectures are viable, present trade-offs and let the user choose
+- Only proceed to implementation once the approach is agreed upon
+
+### 4. Classify the task layer
 
 UI/hooks → SDK/scripts → Smart contracts → Testing/CI → Infra
 
-### 4. Pick building blocks
+### 5. Pick building blocks
 
 - UI (full-featured): VeChain Kit hooks + components
 - UI (lightweight/non-React): dapp-kit
@@ -74,7 +83,7 @@ UI/hooks → SDK/scripts → Smart contracts → Testing/CI → Infra
 - Do you want a lightweight wallet-only integration with minimal dependencies? → dapp-kit
 - Non-React framework? → dapp-kit
 
-### 5. Implement with VeChain-specific correctness
+### 6. Implement with VeChain-specific correctness
 
 - Network: always explicit (`mainnet`/`testnet`/`solo`)
 - Gas: estimate first, use fee delegation where appropriate
@@ -82,13 +91,21 @@ UI/hooks → SDK/scripts → Smart contracts → Testing/CI → Infra
 - Tokens: VET for value, VTHO for gas (dual-token model)
 - Social login: Generic Delegator auto-enabled (users pay gas in VET/VTHO/B3TR); app-sponsored delegation optional for better UX; smart accounts; pre-fetch data before `sendTransaction`
 
-### 6. Test
+### 7. Test
 
 - Unit: Hardhat + Thor Solo
 - Integration: Thor Solo with realistic state
 - Wallet UX: mocked hook/provider tests
 
-### 7. Deliver
+### 8. Verify and deliver
+
+A task is **not complete** until all applicable gates pass:
+
+1. **Code compiles** — no build errors (`npm run build` or equivalent succeeds)
+2. **Tests pass** — existing tests still pass; new logic has test coverage
+3. **Risk notes documented** — any signing, fee, or token-transfer implications are called out to the user
+
+Then provide:
 
 - Files changed + diffs
 - Install/build/test commands
