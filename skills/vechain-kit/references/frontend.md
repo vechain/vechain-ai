@@ -290,6 +290,118 @@ const { language, setLanguage } = useCurrentLanguage();
 
 ---
 
+## Component Organization
+
+Group components into contextual folders instead of placing all files flat in `src/components/`. Each folder gets a barrel `index.ts` for clean imports.
+
+### Folder Structure
+
+```
+src/components/
+  AppsAsRelayers/
+    AppsAsRelayersCard.tsx
+    AppsAsRelayersModal.tsx
+    index.ts
+  RelayerInfo/
+    BecomeRelayerCard.tsx
+    RelayerInfoBanner.tsx
+    RelayerInfoModal.tsx
+    index.ts
+  Rounds/
+    RoundCard.tsx
+    RoundsChart.tsx
+    RoundsList.tsx
+    index.ts
+  Base/
+    BaseModal.tsx
+    BaseBottomSheet.tsx
+    index.ts
+  Layout/
+    Navbar.tsx
+    Footer.tsx
+    index.ts
+  ui/
+    color-mode.tsx
+    provider.tsx
+  ConnectedWallet.tsx       # standalone components stay at root
+  StatsCards.tsx
+```
+
+### Naming Convention
+
+Append the component type to the file name so it is easy to find:
+
+- `Card` — card-style display components (e.g., `BecomeRelayerCard.tsx`)
+- `Modal` — modal dialogs (e.g., `AppsAsRelayersModal.tsx`)
+- `Banner` — dismissible banners (e.g., `RelayerInfoBanner.tsx`)
+- `List` — list/collection components (e.g., `RoundsList.tsx`)
+- `Chart` — data visualization (e.g., `RoundsChart.tsx`)
+- `Skeleton` — loading placeholders (e.g., `RoundDetailSkeleton.tsx`)
+
+### Barrel Exports
+
+Each folder has an `index.ts` that re-exports all public components:
+
+```ts
+// src/components/Rounds/index.ts
+export { RoundCard } from "./RoundCard"
+export { RoundsChart } from "./RoundsChart"
+export { RoundsList } from "./RoundsList"
+```
+
+### Import Style
+
+Use relative imports (`../`) between components within `src/components/` instead of the `@/components/` alias. Reserve `@/components/` for imports from outside the components directory (e.g., from `src/app/`).
+
+```tsx
+// GOOD — inside src/components/RoundDetail/RoundDetailContent.tsx
+import { AppsAsRelayersCard } from "../AppsAsRelayers"
+import { BaseModal } from "../Base/BaseModal"
+
+// GOOD — inside src/app/DashboardContent.tsx
+import { RoundsList, RoundsChart } from "@/components/Rounds"
+
+// BAD — inside src/components/ using alias
+import { BaseModal } from "@/components/Base/BaseModal"
+```
+
+### Modals
+
+Always use `BaseModal` for modals — it automatically renders as a bottom sheet on mobile and a centered dialog on desktop:
+
+```tsx
+import { BaseModal } from "../Base/BaseModal"
+
+export function MyFeatureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  return (
+    <BaseModal isOpen={isOpen} onClose={onClose} showCloseButton isCloseable>
+      {/* modal content */}
+    </BaseModal>
+  )
+}
+```
+
+---
+
+## Verification After Changes
+
+After completing a significant chunk of work, always run all three checks before considering the task done:
+
+```bash
+# 1. Type check
+npx tsc --noEmit
+
+# 2. Lint
+npx eslint .
+
+# 3. Build
+npm run build   # or yarn build / pnpm build
+```
+
+Fix any errors before moving on. Do not skip these steps — catching issues early prevents cascading breakage.
+
+---
+
 ## Transaction UX Checklist
 
 - Disable inputs while a transaction is pending
