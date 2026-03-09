@@ -21,7 +21,9 @@
     // Fenced code language - disabled (some code blocks are generic)
     "MD040": false,
     // Blanks around tables
-    "MD058": false
+    "MD058": false,
+    // Table column style - disabled (mixed compact/padded tables across skill files)
+    "MD060": false
   },
   "ignores": ["node_modules/", ".nx/", "**/CHANGELOG.md"]
 }
