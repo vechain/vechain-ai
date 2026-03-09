@@ -19,14 +19,6 @@
       "description": "Full-stack VeChain development — dApps, smart contracts, fee delegation, testing, security, and DeFi ecosystem (VeBetterDAO, StarGate, governance)"
     },
     {
-      "name": "karpathy-guidelines",
-      "source": {
-        "source": "github",
-        "repo": "vechain/vechain-ai-skills"
-      },
-      "description": "Behavioral guidelines to reduce common LLM coding mistakes — surface assumptions, surgical changes, simplicity first, verifiable success criteria"
-    },
-    {
       "name": "translate",
       "source": {
         "source": "github",
@@ -41,22 +33,6 @@
         "repo": "vechain/vechain-ai-skills"
       },
       "description": "Interview you relentlessly about every aspect of a plan until shared understanding — walks the design tree, resolves dependencies one-by-one"
-    },
-    {
-      "name": "prd",
-      "source": {
-        "source": "github",
-        "repo": "vechain/vechain-ai-skills"
-      },
-      "description": "Generate a Product Requirements Document (PRD) for a new feature — clear, actionable, and suitable for implementation"
-    },
-    {
-      "name": "ralph",
-      "source": {
-        "source": "github",
-        "repo": "vechain/vechain-ai-skills"
-      },
-      "description": "Autonomous agent runner that implements features from PRDs — converts PRDs to prd.json, executes user stories one at a time via Claude CLI"
     }
   ]
 }
