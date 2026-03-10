@@ -18,6 +18,13 @@ A complete walkthrough based on the official example app from `vechain/react-nat
 }
 ```
 
+> **Expo projects** also need `expo-linking` to generate the correct redirect URL:
+>
+> ```bash
+> npx expo install expo-linking
+> ```
+```
+
 ## Entry Point
 
 Import the random values polyfill **first**:
@@ -127,6 +134,7 @@ import {
   type OnVeWorldSignedTransactionData,
   type OnVeWorldSignedData,
 } from '@vechain/react-native-wallet-link';
+import { createURL } from 'expo-linking'; // Expo projects only
 import { useVeWorldStore } from './stores/useVeWorldStore';
 import { useResponseStore } from './stores/useResponseStore';
 import { Home } from './screens/Home';
@@ -144,12 +152,17 @@ export default function App() {
   } = useVeWorldStore();
   const { setResponse } = useResponseStore();
 
+  // Expo: use createURL() to generate the correct redirect URL for your scheme.
+  // This handles Expo Go (exp://), dev client, and production builds automatically.
+  // For bare React Native, use a hardcoded scheme instead: "myapp://"
+  const redirectUrl = createURL('/');
+
   return (
     <SafeAreaProvider>
       <VeWorldProvider
         appName="MyApp"
         appUrl="https://myapp.com"
-        redirectUrl="myapp://"
+        redirectUrl={redirectUrl}
         node={TESTNET_URL}
         config={{
           onVeWorldConnected: (response) => {

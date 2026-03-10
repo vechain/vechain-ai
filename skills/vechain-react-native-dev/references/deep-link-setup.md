@@ -67,7 +67,24 @@ export function redirectSystemPath({ path }: { path: string }): NativeIntent | s
 
 ### VeWorldProvider redirectUrl
 
-Match the `redirectUrl` prop to your configured scheme:
+For Expo projects, install `expo-linking` and use `createURL()` to generate the redirect URL. This ensures the correct URL is produced across Expo Go, dev clients, and production builds:
+
+```bash
+npx expo install expo-linking
+```
+
+```tsx
+import { createURL } from 'expo-linking';
+
+const redirectUrl = createURL('/');
+
+<VeWorldProvider
+  redirectUrl={redirectUrl}
+  // ... other props
+>
+```
+
+For bare React Native projects (without Expo), use a hardcoded scheme:
 
 ```tsx
 <VeWorldProvider
