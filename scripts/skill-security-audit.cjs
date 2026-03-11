@@ -445,8 +445,8 @@ function formatMarkdown({ findings, high, medium, low, fileCount }) {
     lines.push('| File | Line | Finding | Excerpt |');
     lines.push('|------|------|---------|---------|');
     for (const f of items) {
-      const esc = f.excerpt.replace(/\|/g, '\\|').replace(/`/g, '');
-      lines.push(`| \`${f.file}\` | ${f.line} | ${f.message} | \`${esc}\` |`);
+    const esc = f.excerpt.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/`/g, '');
+    lines.push(`| \`${f.file}\` | ${f.line} | ${f.message} | \`${esc}\` |`);
     }
     lines.push('');
   }
@@ -460,7 +460,7 @@ function formatMarkdown({ findings, high, medium, low, fileCount }) {
     lines.push('| File | Line | Finding | Excerpt |');
     lines.push('|------|------|---------|---------|');
     for (const f of low) {
-      const esc = f.excerpt.replace(/\|/g, '\\|').replace(/`/g, '');
+      const esc = f.excerpt.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/`/g, '');
       lines.push(`| \`${f.file}\` | ${f.line} | ${f.message} | \`${esc}\` |`);
     }
     lines.push('');
