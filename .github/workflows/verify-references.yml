@@ -1,4 +1,4 @@
-name: CI
+name: Verify References
 
 on:
   push:
@@ -11,8 +11,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  validate:
-    name: Lint & Validate
+  verify-refs:
+    name: Skill References
     runs-on: ubuntu-latest
 
     steps:
@@ -21,25 +21,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
-
-      - run: npm ci
-
-      - name: Lint markdown
-        run: npx markdownlint-cli2 '**/*.md' '#node_modules' '#.git'
-
-      - name: Validate plugin structure
-        run: node scripts/validate-plugin.cjs
 
       - name: Verify skill references
-        id: verify-refs
+        id: verify
         continue-on-error: true
         run: |
           set -o pipefail
           node scripts/verify-references.cjs 2>&1 | tee /tmp/verify-output.txt
 
       - name: Comment on PR (failure)
-        if: steps.verify-refs.outcome == 'failure' && github.event_name == 'pull_request'
+        if: steps.verify.outcome == 'failure' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -93,7 +84,7 @@ jobs:
             }
 
       - name: Clean up PR comment (success)
-        if: steps.verify-refs.outcome == 'success' && github.event_name == 'pull_request'
+        if: steps.verify.outcome == 'success' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -113,42 +104,5 @@ jobs:
             }
 
       - name: Fail if verification failed
-        if: steps.verify-refs.outcome == 'failure'
+        if: steps.verify.outcome == 'failure'
         run: exit 1
-
-      - name: Skill size report
-        if: github.event_name == 'pull_request'
-        id: size-report
-        run: node scripts/skill-size-report.cjs --markdown > /tmp/size-report.txt
-
-      - name: Comment skill size report
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync('/tmp/size-report.txt', 'utf-8').trim();
-            const marker = '## Skill Size Report';
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
