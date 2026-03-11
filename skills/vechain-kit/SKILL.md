@@ -85,6 +85,10 @@ Read the matching files BEFORE doing anything else. See Critical Rules above.
 
 | Topic | File | Read when user mentions... |
 |-------|------|---------------------------|
-| VeChain Kit | [references/frontend-vechain-kit.md](references/frontend-vechain-kit.md) | VeChain Kit, useWallet, useSendTransaction, useCallClause, WalletButton, TransactionModal, social login, Privy, smart accounts, account abstraction, theming |
+| Setup & config | [references/kit-setup.md](references/kit-setup.md) | Installing VeChain Kit, provider setup, CSS framework, Tailwind, env vars, login methods, legal documents, ecosystem apps, common pitfalls |
+| Hooks | [references/kit-hooks.md](references/kit-hooks.md) | useWallet, useCallClause, useSendTransaction, useBuildTransaction, useSignMessage, contract reads, transactions, VET domains, NFTs, blockchain hooks, language/currency, @vechain/contract-getters |
+| Components & modals | [references/kit-components.md](references/kit-components.md) | WalletButton, TransactionModal, TransactionToast, modal hooks, isolated views |
+| Social login | [references/kit-social-login.md](references/kit-social-login.md) | Social login, smart accounts, account abstraction, Privy setup, fee delegation for social login, DIY social login |
+| Theming | [references/kit-theming.md](references/kit-theming.md) | Theming, colors, fonts, buttons, glass effects, bottom sheet, Chakra UI compatibility, webpack fallbacks |
 | dapp-kit | [references/frontend-dappkit.md](references/frontend-dappkit.md) | dapp-kit, DAppKitProvider, lightweight wallet |
 | Translations + Kit | [references/translations-vechain-kit.md](references/translations-vechain-kit.md) | i18n, translations, language sync, VeChain Kit language, missing translations, pre-commit, ESLint, unused keys |

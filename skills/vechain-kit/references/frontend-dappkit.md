@@ -92,7 +92,7 @@ import { WalletButton } from '@vechain/dapp-kit-react';
 
 ## Limitations vs VeChain Kit
 
-- No social login (Privy) -- DIY only, see [frontend-vechain-kit.md](frontend-vechain-kit.md)
+- No social login (Privy) -- DIY only, see the **vechain-kit** skill (`references/kit-social-login.md`)
 - No pre-built transaction UI (TransactionModal, TransactionToast)
 - No contract read hooks (useCallClause) -- build your own with React Query + `useThor()`
 - No token management hooks
