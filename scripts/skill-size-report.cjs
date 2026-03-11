@@ -2,8 +2,10 @@
 'use strict';
 
 /**
- * Generates a skill size report as a GitHub-flavoured Markdown table.
- * Output: JSON with { summary, skills } written to stdout.
+ * Generates a skill size report with estimated token counts.
+ *
+ * Token estimation uses ~4 chars per token (standard approximation for
+ * mixed English/code content with Claude's tokenizer).
  *
  * Usage:
  *   node scripts/skill-size-report.cjs            # prints JSON
@@ -14,14 +16,24 @@ const fs = require('fs');
 const path = require('path');
 
 const SKILLS_DIR = path.join(__dirname, '..', 'skills');
-const LARGE_REF_THRESHOLD = 20000; // chars — flag references above this
-const LARGE_SKILL_THRESHOLD = 8000; // chars — flag SKILL.md above this
+
+// Thresholds in estimated tokens
+const SKILL_MD_TOKEN_THRESHOLD = 2000; // SKILL.md is always loaded — alert above this
+const REF_FILE_TOKEN_THRESHOLD = 5000; // single ref file — alert above this
+
+function estimateTokens(chars) {
+  return Math.ceil(chars / 4);
+}
+
+function formatTokens(tokens) {
+  if (tokens < 1000) return `${tokens}`;
+  return `${(tokens / 1000).toFixed(1)}K`;
+}
 
 function getFileStats(filePath) {
   const content = fs.readFileSync(filePath, 'utf-8');
-  const lines = content.split('\n').length;
   const chars = Buffer.byteLength(content, 'utf-8');
-  return { lines, chars };
+  return { chars, tokens: estimateTokens(chars) };
 }
 
 function analyseSkill(skillDir) {
@@ -33,16 +45,14 @@ function analyseSkill(skillDir) {
   const skillMd = getFileStats(skillMdPath);
   const refsDir = path.join(skillDir, 'references');
   const refs = [];
-  let totalRefChars = 0;
-  let totalRefLines = 0;
+  let totalRefTokens = 0;
 
   if (fs.existsSync(refsDir)) {
     for (const file of fs.readdirSync(refsDir).sort()) {
       if (!file.endsWith('.md')) continue;
       const stats = getFileStats(path.join(refsDir, file));
       refs.push({ file, ...stats });
-      totalRefChars += stats.chars;
-      totalRefLines += stats.lines;
+      totalRefTokens += stats.tokens;
     }
   }
 
@@ -50,91 +60,88 @@ function analyseSkill(skillDir) {
     name,
     skillMd,
     refs,
-    totalChars: skillMd.chars + totalRefChars,
-    totalLines: skillMd.lines + totalRefLines,
-    totalRefChars,
-    totalRefLines,
+    totalTokens: skillMd.tokens + totalRefTokens,
+    totalRefTokens,
     refCount: refs.length,
   };
 }
 
-function formatBytes(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
-}
-
 function generateMarkdown(skills) {
-  const sorted = [...skills].sort((a, b) => b.totalChars - a.totalChars);
-  const grandTotalChars = sorted.reduce((s, sk) => s + sk.totalChars, 0);
-  const grandTotalLines = sorted.reduce((s, sk) => s + sk.totalLines, 0);
+  const sorted = [...skills].sort((a, b) => b.totalTokens - a.totalTokens);
+  const grandTotal = sorted.reduce((s, sk) => s + sk.totalTokens, 0);
 
   const lines = [];
   lines.push('## Skill Size Report');
   lines.push('');
-  lines.push('| Skill | SKILL.md | References | Total | Flags |');
-  lines.push('|-------|----------|------------|-------|-------|');
+  lines.push('| Skill | SKILL.md (always loaded) | Ref files (on demand) | Total est. tokens | Alerts |');
+  lines.push('|-------|-------------------------|----------------------|-------------------|--------|');
 
   for (const sk of sorted) {
-    const flags = [];
-    if (sk.skillMd.chars > LARGE_SKILL_THRESHOLD) {
-      flags.push(`SKILL.md ${formatBytes(sk.skillMd.chars)}`);
+    const alerts = [];
+
+    if (sk.skillMd.tokens > SKILL_MD_TOKEN_THRESHOLD) {
+      alerts.push(`SKILL.md ~${formatTokens(sk.skillMd.tokens)} tok (always in context)`);
     }
     for (const ref of sk.refs) {
-      if (ref.chars > LARGE_REF_THRESHOLD) {
-        flags.push(`${ref.file} ${formatBytes(ref.chars)}`);
+      if (ref.tokens > REF_FILE_TOKEN_THRESHOLD) {
+        alerts.push(`${ref.file} ~${formatTokens(ref.tokens)} tok (consider splitting)`);
       }
     }
-    const flagStr = flags.length > 0 ? flags.map(f => `\u26a0\ufe0f ${f}`).join(', ') : '\u2705';
+
+    const alertStr = alerts.length > 0
+      ? alerts.map((a) => `\u26a0\ufe0f ${a}`).join('<br>')
+      : '\u2705';
 
     lines.push(
       `| **${sk.name}** ` +
-      `| ${sk.skillMd.lines} lines (${formatBytes(sk.skillMd.chars)}) ` +
-      `| ${sk.refCount} files, ${sk.totalRefLines} lines (${formatBytes(sk.totalRefChars)}) ` +
-      `| ${formatBytes(sk.totalChars)} ` +
-      `| ${flagStr} |`
+      `| ~${formatTokens(sk.skillMd.tokens)} tok ` +
+      `| ${sk.refCount} files, ~${formatTokens(sk.totalRefTokens)} tok ` +
+      `| ~${formatTokens(sk.totalTokens)} tok ` +
+      `| ${alertStr} |`,
     );
   }
 
   lines.push(
-    `| **TOTAL** | | | **${formatBytes(grandTotalChars)}** (${grandTotalLines} lines) | |`
+    `| **TOTAL** | | | **~${formatTokens(grandTotal)} tok** | |`,
   );
 
+  // Detail table for large files
   lines.push('');
-  lines.push('<details><summary>Large reference files (>' + formatBytes(LARGE_REF_THRESHOLD) + ')</summary>');
+  lines.push(`<details><summary>Large reference files (>${formatTokens(REF_FILE_TOKEN_THRESHOLD)} tok)</summary>`);
   lines.push('');
-  lines.push('| File | Size | Lines |');
-  lines.push('|------|------|-------|');
+  lines.push('| File | Est. tokens |');
+  lines.push('|------|-------------|');
 
   const largeRefs = [];
   for (const sk of sorted) {
     for (const ref of sk.refs) {
-      if (ref.chars > LARGE_REF_THRESHOLD) {
+      if (ref.tokens > REF_FILE_TOKEN_THRESHOLD) {
         largeRefs.push({ skill: sk.name, ...ref });
       }
     }
   }
-  largeRefs.sort((a, b) => b.chars - a.chars);
+  largeRefs.sort((a, b) => b.tokens - a.tokens);
 
   if (largeRefs.length === 0) {
-    lines.push('| _None_ | | |');
+    lines.push('| _None_ | |');
   } else {
     for (const ref of largeRefs) {
-      lines.push(`| ${ref.skill}/references/${ref.file} | ${formatBytes(ref.chars)} | ${ref.lines} |`);
+      lines.push(`| ${ref.skill}/references/${ref.file} | ~${formatTokens(ref.tokens)} |`);
     }
   }
 
   lines.push('');
   lines.push('</details>');
   lines.push('');
-  lines.push('> Large files consume more context window when loaded. Consider splitting files over ' + formatBytes(LARGE_REF_THRESHOLD) + ' into focused sub-references.');
+  lines.push('> **How to read this:** SKILL.md is always loaded into the context window. Reference files are loaded on demand when the topic matches. Token counts are estimates (~4 chars/token). Consider splitting reference files over ~' + formatTokens(REF_FILE_TOKEN_THRESHOLD) + ' tokens.');
 
   return lines.join('\n');
 }
 
 // Main
 const skillDirs = fs.readdirSync(SKILLS_DIR)
-  .map(d => path.join(SKILLS_DIR, d))
-  .filter(d => fs.statSync(d).isDirectory());
+  .map((d) => path.join(SKILLS_DIR, d))
+  .filter((d) => fs.statSync(d).isDirectory());
 
 const skills = skillDirs.map(analyseSkill).filter(Boolean);
 
