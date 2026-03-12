@@ -1,7 +1,7 @@
 {
   "name": "vechain-ai",
   "version": "0.3.0",
-  "description": "VeChain AI skill collection — vechain-core, vechain-kit, frontend, smart-contract-development, vebetterdao, stargate, and more (11 skills)",
+  "description": "VeChain AI skill collection — vechain-core, vechain-kit, frontend, smart-contract-development, vebetterdao, stargate, and more (12 skills)",
   "author": {
     "name": "VeChain",
     "email": "developers@vechain.org"
@@ -32,6 +32,7 @@
     "./skills/auto-voting-relayers",
     "./skills/create-vechain-dapp",
     "./skills/vechain-react-native-dev",
-    "./skills/indexer-core"
+    "./skills/indexer-core",
+    "./skills/x-2-earn-apps"
   ]
 }

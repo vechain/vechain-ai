@@ -105,6 +105,14 @@
         "repo": "vechain/vechain-ai-skills"
       },
       "description": "VeChain indexer-core library — IndexerFactory, IndexerRunner, LogsIndexer vs BlockIndexer mode selection, ABI and business events, rollback semantics, and integration guidance"
+    },
+    {
+      "name": "x-2-earn-apps",
+      "source": {
+        "source": "github",
+        "repo": "vechain/vechain-ai-skills"
+      },
+      "description": "Build X2Earn sustainability apps on VeBetterDAO — reward distribution, sustainability proofs, app submission, endorsement, security, and VePassport integration"
     }
   ]
 }
