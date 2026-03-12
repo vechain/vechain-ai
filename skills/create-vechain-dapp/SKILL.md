@@ -80,7 +80,7 @@ yarn install
 
 **Standalone:** `yarn dev` (localhost:3000), `yarn build` (static export → `out/`)
 
-**Monorepo:** `yarn dev` (auto-deploys contracts to solo), `yarn build`, `yarn contracts:compile`, `yarn contracts:test`
+**Monorepo:** `make solo-up` (start Thor solo node, requires Docker), then `yarn dev` (auto-deploys contracts to solo), `yarn build`, `yarn contracts:compile`, `yarn contracts:test`. Stop with `make solo-down`, reset with `make solo-clean`.
 
 ### Phase 4 — Git init
 
