@@ -11,6 +11,7 @@ Source files from `shared.md` go under `apps/frontend/src/`.
 ├── .github/workflows/deploy.yml
 ├── .gitignore
 ├── .nvmrc
+├── Makefile
 ├── package.json
 ├── turbo.json
 ├── apps/
@@ -32,6 +33,7 @@ Source files from `shared.md` go under `apps/frontend/src/`.
 │   │       └── generateMockLocalConfig.mjs
 │   ├── contracts/
 │   │   ├── .gitignore
+│   │   ├── docker-compose.yaml
 │   │   ├── contracts/
 │   │   │   ├── HelloWorld.sol          ← UUPS upgradeable
 │   │   │   └── VeChainProxy.sol        ← ERC1967 proxy
@@ -80,6 +82,8 @@ Source files from `shared.md` go under `apps/frontend/src/`.
     "contracts:generate-docs": "turbo generate-docs --filter=@{{PROJECT_NAME}}/contracts",
     "contracts:coverage": "turbo coverage --filter=@{{PROJECT_NAME}}/contracts",
     "contracts:size": "turbo size --filter=@{{PROJECT_NAME}}/contracts",
+    "solo-up": "make solo-up",
+    "solo-down": "make solo-down",
     "clean": "turbo clean && rm -rf node_modules"
   },
   "dependencies": {
@@ -233,6 +237,29 @@ NEXT_PUBLIC_BASE_PATH=
 - `MNEMONIC` — used by Hardhat for contract deployment. The default solo mnemonic has pre-funded accounts. For testnet/mainnet, replace with your own.
 - `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` — get one from https://cloud.walletconnect.com
 - `NEXT_PUBLIC_BASE_PATH` — set to `/<repo-name>` for GitHub Pages, leave empty for custom domains or local dev.
+
+### `Makefile`
+
+Convenience targets for managing the Thor solo node (requires Docker).
+
+```makefile
+SHELL := /bin/bash
+
+help:
+	@egrep -h '\s#@\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?#@ "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
+
+# Thor solo
+solo-up: #@ Start Thor solo
+	docker compose -f packages/contracts/docker-compose.yaml up -d --wait
+solo-down: #@ Stop Thor solo
+	docker compose -f packages/contracts/docker-compose.yaml down
+solo-clean: #@ Clean Thor solo (removes volumes)
+	docker compose -f packages/contracts/docker-compose.yaml down -v --remove-orphans
+```
+
+- `make solo-up` — start Thor solo in the background, wait until healthy
+- `make solo-down` — stop Thor solo
+- `make solo-clean` — stop and remove all data (fresh chain next start)
 
 ## `apps/frontend/`
 
@@ -1314,6 +1341,50 @@ typechain-types/
 node_modules/
 coverage/
 ```
+
+### `docker-compose.yaml`
+
+Thor solo node for local development. Runs on port 8669 with on-demand block production and persistent data.
+
+```yaml
+services:
+  thor-solo:
+    image: ghcr.io/vechain/thor:latest
+    hostname: thor-solo
+    container_name: thor-solo
+    user: root
+    environment:
+      - DOCKER=1
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "apk update --no-cache && apk add --no-cache curl && thor solo --on-demand --persist --data-dir /data/thor --api-addr 0.0.0.0:8669 --api-cors '*' --verbosity 10",
+      ]
+    ports:
+      - "8669:8669"
+    healthcheck:
+      test: curl --fail 0.0.0.0:8669/blocks/0 || exit 1
+      interval: "2s"
+      retries: 30
+    volumes:
+      - thor-data:/data/thor
+    networks:
+      - vechain-thor
+
+networks:
+  vechain-thor:
+    driver: bridge
+    name: vechain-thor
+volumes:
+  thor-data:
+    driver: local
+    name: thor-data
+```
+
+- `--on-demand` — produces blocks only when transactions arrive (faster tests)
+- `--persist` — data survives container restarts (use `make solo-clean` to reset)
+- Health check ensures `make solo-up` waits until the node is ready before returning
 
 ## `.github/workflows/deploy.yml`
 
