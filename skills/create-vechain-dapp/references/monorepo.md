@@ -71,9 +71,9 @@ Source files from `shared.md` go under `apps/frontend/src/`.
   "name": "{{PROJECT_NAME}}",
   "private": true,
   "scripts": {
-    "dev": "NEXT_PUBLIC_APP_ENV=local turbo dev",
-    "dev:testnet": "NEXT_PUBLIC_APP_ENV=testnet turbo dev",
-    "dev:mainnet": "NEXT_PUBLIC_APP_ENV=mainnet turbo dev",
+    "dev": "yarn && dotenv -v NEXT_PUBLIC_APP_ENV=local -e .env -- turbo dev",
+    "dev:testnet": "yarn && dotenv -v NEXT_PUBLIC_APP_ENV=testnet -e .env -- turbo dev",
+    "dev:mainnet": "yarn && dotenv -v NEXT_PUBLIC_APP_ENV=mainnet -e .env -- turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
@@ -90,6 +90,7 @@ Source files from `shared.md` go under `apps/frontend/src/`.
     "turbo": "^2.5.0"
   },
   "devDependencies": {
+    "dotenv-cli": "^7.4.0",
     "prettier": "^3.3.0"
   },
   "workspaces": [
