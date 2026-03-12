@@ -120,8 +120,9 @@ The monorepo uses a `packages/config` package that centralizes contract addresse
 
 - **`local.ts` is git-ignored** — each dev's solo deployment produces different addresses. A mock is auto-generated on first run.
 - **`NEXT_PUBLIC_APP_ENV`** controls which config file is loaded (`local`, `testnet`, `mainnet`).
-- **Turbo pipeline** ensures: generate mock config → compile contracts → check/deploy on solo → write real addresses → start frontend.
-- **`checkContractsDeployment.ts`** runs before dev — if contracts aren't deployed on solo, it deploys them and overwrites `local.ts` with real addresses.
+- **`yarn dev`** runs against solo, **`yarn dev:testnet`** against testnet, **`yarn dev:mainnet`** against mainnet.
+- **Turbo pipeline** ensures: generate mock config → compile contracts → check/deploy on target network → write addresses to matching config file → start frontend.
+- **`checkContractsDeployment.ts`** runs before dev for any environment — if contracts aren't deployed, it deploys them and writes addresses to the correct config file (`local.ts`, `testnet.ts`, or `mainnet.ts`).
 
 ### VeChain Kit integration
 

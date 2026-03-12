@@ -89,15 +89,16 @@ Source files from `shared.md` go under `apps/frontend/src/`.
 
 ### `turbo.json`
 
-The turbo pipeline ensures contracts are compiled and deployed (on solo) before the frontend starts.
+The turbo pipeline ensures contracts are compiled and deployed before the frontend starts. Each `dev:<env>` variant runs the matching `check-contracts-deployment:<env>` against the correct network.
 
 **Flow:** `dev` → `setup-contracts` → `compile` + `check-contracts-deployment` → `check-or-generate-local-config`
 
 - `check-or-generate-local-config` runs first to ensure `packages/config/local.ts` exists (generates mock if missing)
 - `compile` depends on config being available (Hardhat imports config)
-- `check-contracts-deployment` runs after compile — checks if contracts are deployed on solo, deploys if not, writes real addresses to `local.ts`
+- `check-contracts-deployment` runs after compile — checks if contracts are deployed, deploys if not, writes addresses to the matching config file
 - `setup-contracts` orchestrates compile + deployment check
 - `dev` depends on `setup-contracts` completing
+- `dev:testnet` / `dev:mainnet` follow the same flow but target their respective networks
 
 ```json
 {
@@ -118,9 +119,27 @@ The turbo pipeline ensures contracts are compiled and deployed (on solo) before 
       "persistent": true,
       "dependsOn": ["^setup-contracts"]
     },
+    "dev:testnet": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^setup-contracts:testnet"]
+    },
+    "dev:mainnet": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^setup-contracts:mainnet"]
+    },
     "setup-contracts": {
       "cache": false,
       "dependsOn": ["^compile", "@{{PROJECT_NAME}}/contracts#check-contracts-deployment"]
+    },
+    "setup-contracts:testnet": {
+      "cache": false,
+      "dependsOn": ["^compile", "@{{PROJECT_NAME}}/contracts#check-contracts-deployment:testnet"]
+    },
+    "setup-contracts:mainnet": {
+      "cache": false,
+      "dependsOn": ["^compile", "@{{PROJECT_NAME}}/contracts#check-contracts-deployment:mainnet"]
     },
     "@{{PROJECT_NAME}}/config#check-or-generate-local-config": {
       "cache": false
@@ -131,6 +150,14 @@ The turbo pipeline ensures contracts are compiled and deployed (on solo) before 
       "outputs": ["artifacts/**", "typechain-types/**", "cache/**"]
     },
     "@{{PROJECT_NAME}}/contracts#check-contracts-deployment": {
+      "cache": false,
+      "dependsOn": ["^compile", "@{{PROJECT_NAME}}/config#check-or-generate-local-config"]
+    },
+    "@{{PROJECT_NAME}}/contracts#check-contracts-deployment:testnet": {
+      "cache": false,
+      "dependsOn": ["^compile", "@{{PROJECT_NAME}}/config#check-or-generate-local-config"]
+    },
+    "@{{PROJECT_NAME}}/contracts#check-contracts-deployment:mainnet": {
       "cache": false,
       "dependsOn": ["^compile", "@{{PROJECT_NAME}}/config#check-or-generate-local-config"]
     },
@@ -584,7 +611,11 @@ generateMockLocalConfig()
     "build": "hardhat compile",
     "test": "hardhat test --network hardhat",
     "check-contracts-deployment": "hardhat run scripts/checkContractsDeployment.ts --network vechain_solo",
+    "check-contracts-deployment:testnet": "hardhat run scripts/checkContractsDeployment.ts --network vechain_testnet",
+    "check-contracts-deployment:mainnet": "hardhat run scripts/checkContractsDeployment.ts --network vechain_mainnet",
     "setup-contracts": "echo 'Setup complete'",
+    "setup-contracts:testnet": "echo 'Setup complete'",
+    "setup-contracts:mainnet": "echo 'Setup complete'",
     "clean": "hardhat clean"
   },
   "dependencies": {
@@ -708,16 +739,16 @@ describe("HelloWorld", function () {
 
 ### `scripts/checkContractsDeployment.ts`
 
-Checks if contracts are deployed on the current network. If not (on solo only), deploys them and writes real addresses to `packages/config/local.ts`.
+Checks if contracts are deployed on the current network. If not, deploys them and writes real addresses to the matching config file (`local.ts`, `testnet.ts`, or `mainnet.ts`).
 
 ```typescript
 import { ethers, network } from "hardhat"
-import { getConfig, AppConfig } from "@{{PROJECT_NAME}}/config"
+import { getConfig, AppConfig, AppEnv } from "@{{PROJECT_NAME}}/config"
 import fs from "fs"
 import path from "path"
 
 const config = getConfig()
-const isSoloNetwork = network.name === "vechain_solo"
+const env = config.environment
 
 async function main() {
   console.log(`Checking contracts deployment on ${network.name} (${config.nodeUrl})...`)
@@ -730,18 +761,14 @@ async function main() {
 
     if (code === "0x") {
       console.log(`HelloWorld contract not deployed at ${config.contracts.helloWorld}`)
+      console.log(`Deploying contracts to ${network.name}...`)
 
-      if (isSoloNetwork) {
-        console.log("Deploying contracts to solo network...")
-        const factory = await ethers.getContractFactory("HelloWorld")
-        const contract = await factory.deploy()
-        const address = await contract.getAddress()
-        console.log(`HelloWorld deployed at: ${address}`)
+      const factory = await ethers.getContractFactory("HelloWorld")
+      const contract = await factory.deploy()
+      const address = await contract.getAddress()
+      console.log(`HelloWorld deployed at: ${address}`)
 
-        await overrideLocalConfig(address)
-      } else {
-        console.log(`Skipping deployment on ${network.name}`)
-      }
+      await overrideConfigWithNewContracts(address)
     } else {
       console.log("Contracts already deployed")
     }
@@ -752,7 +779,7 @@ async function main() {
   process.exit(0)
 }
 
-async function overrideLocalConfig(helloWorldAddress: string) {
+async function overrideConfigWithNewContracts(helloWorldAddress: string) {
   const newConfig: AppConfig = {
     ...config,
     contracts: {
@@ -765,9 +792,24 @@ const config: AppConfig = ${JSON.stringify(newConfig, null, 2)}
 export default config
 `
 
-  const localConfigPath = path.resolve(__dirname, "../../config/local.ts")
-  console.log(`Writing new config to ${localConfigPath}`)
-  fs.writeFileSync(localConfigPath, toWrite)
+  let fileToWrite: string
+  switch (env) {
+    case AppEnv.LOCAL:
+      fileToWrite = "local.ts"
+      break
+    case AppEnv.TESTNET:
+      fileToWrite = "testnet.ts"
+      break
+    case AppEnv.MAINNET:
+      fileToWrite = "mainnet.ts"
+      break
+    default:
+      throw new Error(`Unsupported NEXT_PUBLIC_APP_ENV: ${env}`)
+  }
+
+  const configPath = path.resolve(__dirname, `../../config/${fileToWrite}`)
+  console.log(`Writing new config to ${configPath}`)
+  fs.writeFileSync(configPath, toWrite)
 }
 
 main().catch((error) => {
